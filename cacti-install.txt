@@ -1,0 +1,65 @@
+一、安装lnmp/lamp环境
+	lnmp-install.sh/lamp-install.sh
+二、下载相关软件
+	cacti-0.8.8f.tar.gz
+	cacti-spine-0.8.8f.tar.gz
+	rrdtool-1.4.5.targz
+三、安装依赖环境
+	yum install net-snmp net-snmp-devel net-snmp-libs net-snmp-utils cairo-devel libxml2-devel pango-devel pango libpng-devel freetype freetype-devel libart_lgpl-devel -y
+	vim /etc/snmp/snmpd.conf
+		com2sec		notConfigUser	127.0.0.1 	public
+		access	notConfigGroup	""	any		noauth	exact	all	none 	none
+		view	all		include		.1 		80
+	:wq
+	service snmpd start
+
+	安装rrdtool
+	cd /usr/local/src
+	tar fx rrdtool-1.4.5.tar.gz
+	cd rrdtool-1.4.5
+	./configure --prefix=/usr/local/rrdtool
+	make && make install
+
+	创建cacti用户、配置web站点
+	useradd -s /sbin/nologin cacti
+	tar cacti-0.8.8f.tar.gz
+	cp -r cacti-0.8.8f /usr/local/nginx/html/cacti
+
+	创建cacti数据库、导入数据库
+	mysql -u root -p
+	>create database cacti;
+	>create user 'cacti'@'localhost' identified by 'cacti123;
+	>flush privileges;
+	>grant all on cacti.* to 'cacti'@'127.0.0.1' identified by 'cacti123';
+	>flush privileges;
+	>source /usr/local/nginx/html/cacti/cacti.sql;
+
+	编辑配置文件
+	cd /usr/local/nginx/html/cacti/include
+	vim config.php
+		$database_type = "mysql";
+		$database_default = "cacti";
+		$database_hostname = "127.0.0.1";
+		$database_username = "cacti";
+		$database_password = "cacti";
+		$database_port = "3306";
+	:wq
+
+四、初始化安装
+	浏览器输入http://server-ip/cacti
+		>>next
+		>>next
+		>>	/usr/local/rrdtool/bin/rrdtool 	(RRDTool Binary Path)
+			/usr/local/php/bin/php			(PHP Binary Path)
+		>>Finish
+	登录；
+		账号：admin	密码：admin
+		修改密码：		
+		>>Save
+
+
+
+
+
+
+
