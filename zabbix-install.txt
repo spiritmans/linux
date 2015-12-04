@@ -1,0 +1,119 @@
+一、安装lnmp/lamp环境
+	lnmp-install.sh
+二、下载zabbix软件包
+	http://jaist.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/2.4.6/zabbix-2.4.6.tar.gz
+三、创建、导入zabbix数据库
+	1、解压zabbix安装包
+		tar fx zabbix-2.4.6.tar.gz && cd zabbix-2.4.6/database/mysql
+	2、启动mysql服务
+		/etc/init.d/mysqld start
+		mysqladmin -u root password
+		mysql -u root -p
+		>create database zabbix character set utf8;
+		>create user 'zabbix'@'localhost' identified by '123456';
+		>flush privileges;
+		>grant all on zabbix.* to 'zabbix'@'127.0.0.1' identified by '123456''
+		>flush privileges;
+		开始导入zabbix数据库
+		>use zabbix;
+		>source /usr/local/src/zabbix-2.4.6/database/mysql/schema.sql;
+		>source /usr/local/src/zabbix-2.4.6/database/mysql/images.sql;
+		>source /usr/local/src/zabbix-2.4.6/database/mysql/data.sql;
+		>exit;
+		(或者，使用mysql命令导入：
+		mysql -uroot -p -hlocalhost zabbix < /usr/local/src/zabbix-2.4.6/database/mysql/schema.sql
+		mysql -uroot -p -hlocalhost zabbix < /usr/local/src/zabbix-2.4.6/database/mysql/images.sql
+		mysql -uroot -p -hlocalhost zabbix < /usr/local/src/zabbix-2.4.6/database/mysql/data.sql
+		)
+	3、添加链接
+		cd /usr/lib64/mysql
+		ln -s libmysqlclient.so.16.0.0  ./libmysqlclient.so
+		ln -s libmysqlclient_r.so.16.0.0  ./libmysqlclient_r.so
+四、安装zabbix
+	1、添加zabbix用户、安装依赖
+		groupadd zabbix
+		useradd zabbix -g zabbix -s /sbin/nologin
+		yum install curl curl-devel net-snmp-devel -y
+		ln -s /usr/local/libiconv/lib/libiconv.so.2 /usr/lib/
+		/sbin/ldconfig
+
+	2、编译安装zabbix、添加启动脚本
+		cd /usr/local/src/zabbix-2.4.6
+		./configure --prefix=/usr/local/zabbix --enable-server --enable-agent --with-net-snmp --with-libcurl --enable-proxy --with-mysql=/usr/local/mysql/bin/mysql_config
+		make && make install
+		ln -s /usr/local/zabbix/sbin/* /usr/local/sbin/
+		ln -s /usr/local/zabbix/bin/* /usr/local/bin/
+		cp misc/init.d/fedora/core/zabbix_server /etc/init.d/zabbix_server
+		cp misc/init.d/fedora/core/zabbix_server /etc/init.d/zabbix_agentd
+		chmod 755 /etc/init.d/zabbix*
+		sed -i 's#BASEDIR=/usr/local#BASEDIR=/usr/local/zabbix#' /etc/init.d/zabbix_server
+		sed -i 's#BASEDIR=/usr/local#BASEDIR=/usr/local/zabbix#' /etc/init.d/zabbix_agentd
+
+	3、编辑配置文件
+		cd /usr/local/zabbix/etc
+		vim zabbix_server.conf
+			DBName=zabbix 		#数据库名称
+			DBUser=zabbix 		#数据库用户名
+			DBPassword=123456 	#数据库密码
+			ListenIP=127.0.0.1 	#数据库ip地址
+			AlertScriptsPath=/usr/local/zabbix/share/zabbix/alertscripts
+		:wq
+		vim zabbix_agentd.conf
+			Include=/usr/local/zabbix/etc/zabbix_agentd.conf.d/
+			UnsafeUserParameters=1 	#启用自定义key
+		：wq
+	4、配置web站点
+		cd /usr/local/src/zabbix-2.4.6
+		cp frontends/php /usr/local/nginx/html/zabbix
+		#chown www.www /usr/local/nginx/html/zabbix
+		sed -i 's/post_max_size = 8M/post_max_size = 16M/' /usr/local/php/etc/php.ini
+		sed -i 's/max_execution_time = 30/max_execution_time = 300/' /usr/local/php/etc/php.ini
+		sed -i 's/max_input_time = 60/max_input_time = 300/' /usr/local/php/etc/php.ini
+		sed -i 's/;always_populate_raw_post_data = -1/always_populate_raw_post_data = -1/' /usr/local/php/etc/php.ini
+		sed -i 's/;request_terminate_timeout = 0/request_terminate_timeout = 300/' /usr/local/php/etc/php-fpm.conf
+		service nginxd restart
+		service php-fpm restart
+五、安装web  zabbix
+	在浏览器输入http://server-ip/zabbix/setup.php
+		1、Welcome
+			>>next
+		2、Check of pre-requisites
+			>>检查系统环境设置，必须全部为OK。 
+			>>next
+		3、Configure DB connection
+			>>配置数据库信息：
+				Database：MySQL
+				Database host：127.0.0.1
+				Database port：use default port
+				Database name：zabbix
+				User：zabbix
+				Password：123456
+			>>Test connection：显示OK则通过
+			>>next
+		4、Zabbix server details
+			>>默认
+			>>next
+		5、Pre-Installation summary
+			>>默认
+			>>next
+		6、Install
+			>>Download configuration file  (zabbix.conf.php)
+			>>mv zabbix.conf.php /usr/local/nginx/html/zabbix/conf/
+			>>Retry
+			>>Finish
+
+六、更改zabbix语言为简体中文
+	vim /usr/local/nginx/html/zabbix/include/locales.inc.php
+		'zh_CN' => array('name' => _('Chinese (zh_CN)'), 'display' => true),
+	:wq
+	cd /usr/local/nginx/html/zabbix/fonts/
+	mv DejaVusSans.ttf DejaVusSans.ttf.default
+	cd C:\Windows\Frons 	(windows)
+	mv SIMSUNB.TTF DejaVusSans.ttf
+
+	在浏览器中输入http://server-ip/zabbix
+		1、登录	
+			账号：admin		密码：zabbix
+		2、点击Profile
+			Language--->Chinese(zh_CN)--->Save
+		3、退出并重新登录
