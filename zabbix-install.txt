@@ -108,7 +108,7 @@
 	:wq
 	cd /usr/local/nginx/html/zabbix/fonts/
 	mv DejaVusSans.ttf DejaVusSans.ttf.default
-	cd C:\Windows\Frons 	(windows)
+	cd C:\Windows\Fonts 	(windows)
 	mv SIMSUNB.TTF DejaVusSans.ttf
 
 	在浏览器中输入http://server-ip/zabbix
