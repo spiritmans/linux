@@ -1,0 +1,12 @@
+apache
+	http://httpd.apache.org/download.cgi
+tomcat
+	http://tomcat.apache.org/download-60.cgi
+JK	(apache整合tomcat工具)
+	http://tomcat.apache.org/download-connectors.cgi
+apr库
+	http://apr.apache.org/download.cgi
+zabbix
+	http://jaist.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable
+zentao
+	www.zentao.net/download
