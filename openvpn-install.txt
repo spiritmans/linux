@@ -1,0 +1,170 @@
+安装依赖
+	yum install -y 
+安装lzo
+	tar fx lzo-2.02.tar.gz
+	cd lzo-2.02
+	./configure --prefix=/usr/local/lzo
+	make && make install
+安装openvpn
+	tar fx openvpn-2.3.4.tar.gz
+	cd openvpn-2.3.4
+	CFLAGS="-I/usr/local/lzo/include" LDFLAGS="-L/usr/local/lzo/lib" ./configure --prefix=/usr/local/openvpn
+	make && make install
+配置easyrsa服务端
+	cd /usr/local/src/
+	unzip easy-rsa-master.zip
+	cp -R easy-rsa-master /usr/local/openvpn/easy-rsa
+	cd /usr/local/openvpn/easy-rsa/easyrsa3/
+	cp vars.example vars
+	vim vars
+		set_var EASYRSA_REQ_COUNTRY 	"CN"
+		set_var EASYRSA_REQ_PROVINCE 	"Beijing"
+		set_var EASYRSA_REQ_CITY 		"Beijing"
+		set_var EASYRSA_REQ_ORG 		"Spiritmans"
+		set_var EASYRSA_REQ_EMAIL 		"liush20150721@163.com"
+		set_var EASYRSA_REQ_OU 			"My OpenVPN"
+	:wq
+创建服务端证书和key文件
+	1)初始化
+		./easyrsa init-pki
+	2)创建根证书
+		./easyrsa build-ca
+			>>Enter PEM pass phrase:				#输入密码，此密码用途证书签名
+			>>Verifying - Enter PEM pass phrase:	#确认密码
+			>>Common Name [Easy-RSA CA]: spirit		#输入一个Common Name
+	3)创建服务器端证书
+		./easyrsa gen-req server nopass
+			>>Common Name [server]: spirit-s		#一定不要和创建证书的Common Name一样
+	4)签约服务器端证书
+		./easyrsa sign server server
+			>>Confirm request details: yes        	#输入yes继续
+			>>Enter pass phrase for /usr/local/openvpn/easy-rsa/easyrsa3/pki/private/ca.key:    #输入刚才创建根证书时的密码
+	5)创建Diffie-Hellman，确保key穿越不安全网络的命令
+		./easyrsa gen-dh
+创建客户端证书
+	1)建立客户端目录
+		mkdir /client
+		cp /usr/local/src/easy-rsa-master /client/easy-rsa
+		cd /client/easy-rsa/easyrsa3/
+		cp vars.example vars
+		vim vars
+			set_var EASYRSA_REQ_COUNTRY 	"CN"
+			set_var EASYRSA_REQ_PROVINCE 	"Beijing"
+			set_var EASYRSA_REQ_CITY 		"Beijing"
+			set_var EASYRSA_REQ_ORG 		"Spiritmans"
+			set_var EASYRSA_REQ_EMAIL 		"liush20150721@163.com"
+			set_var EASYRSA_REQ_OU 			"My OpenVPN"
+		:wq
+	2)初始化
+		./easyrsa init-pki
+	3)创建客户端key及生成证书
+		./easyrsa gen-req spirit
+			>>Enter PEM pass phrase:            	#输入密码
+			>>Verifying - Enter PEM pass phrase:
+			>>Common Name [spirit]: spirit 			#输入Common Name
+	4)导入生成的客户端spirit.req并签约证书
+		cd /usr/local/openvpn/easy-rsa/easyrsa3/
+		#导入spirit.req
+		./easyrsa import-req /client/easy-rsa/easyrsa3/pki/reqs/spirit.req spirit
+		#签约证书
+		./easyrsa sign client spirit
+			>>Confirm request details: yes      	#输入yes
+			>>Enter pass phrase for /root/openvpn-2.3.4/easy-rsa/easyrsa3/pki/private/ca.key:    #输入创建服务端根证书时的密码
+			>>Certificate created at: /usr/local/openvpn/easy-rsa/easyrsa3/pki/issued/spirit.crt  #签约成功
+服务端及客户端生成的文件
+	1)服务端
+		/usr/local/openvpn/easy-rsa/easyrsa3/pki/ca.crt
+		/usr/local/openvpn/easy-rsa/easyrsa3/pki/reqs/server.req
+		/usr/local/openvpn/easy-rsa/easyrsa3/pki/reqs/spirit.req
+		/usr/local/openvpn/easy-rsa/easyrsa3/pki/private/ca.key
+		/usr/local/openvpn/easy-rsa/easyrsa3/pki/private/server.key
+		/usr/local/openvpn/easy-rsa/easyrsa3/pki/issued/server.crt
+		/usr/local/openvpn/easy-rsa/easyrsa3/pki/issued/spirit.crt
+		/usr/local/openvpn/easy-rsa/easyrsa3/pki/dh.pem
+	2)客户端
+		/client/easy-rsa/easyrsa3/pki/private/spirit.key
+		/client/easy-rsa/easyrsa3/pki/reqs/spirit.req
+拷贝秘钥及证书文件
+	1)服务端
+		cd /usr/local/openvpn/easy-rsa/easyrsa3/pki/
+		cp ca.crt /usr/local/openvpn/
+		cp private/server.key /usr/local/openvpn/
+		cp issued/server.crt /usr/local/openvpn/
+		cp dh.pem /usr/local/openvpn/
+	2)客户端
+		cd /usr/local/openvpn/easy-rsa/easyrsa3/pki/
+		cp ca.crt /client/
+		cp issued/spirit.crt /client/
+		cp /client/easy-rsa/easyrsa3/pki/private/spirit.key /client/
+编辑服务端配置文件
+	cd /usr/local/openvpn/
+	cp /usr/local/src/openvpn-2.3.4/sample/sample-config-files/server.conf ./
+	vim server.conf
+		local 172.16.0.66
+		port 1194
+		proto udp
+		dev tun
+		ca /usr/local/openvpn/ca.crt
+		cert /usr/local/openvpn/server.crt
+		key /usr/local/openvpn/server.key
+		dh /usr/local/openvpn/dh.pem
+		server 10.8.0.0 255.255.255.0
+		ifconfig-pool-persist ipp.txt
+		push "redirect-gateway def1 bypass-dhcp"
+		push "dhcp-option DNS 202.106.0.20"
+		client-to-client
+		keepalive 10 120
+		comp-lzo
+		max-clients 100
+		persist-key
+		persist-tun
+		status openvpn-status.log
+		log-append  openvpn.log
+		verb 3
+	:wq
+开启服务
+	/usr/local/openvpn/sbin/openvpn --config /usr/local/openvpn/server.conf &
+
+开启系统转发
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+	vim /etc/sysctl.conf
+		net.ipv4.ip_forward = 1
+	:wq
+	sysctl -p
+
+防火墙设置
+	#eth0为服务器公网ip网卡
+	iptables -t nat -I POSTROUTING -s 10.8.0.0/255.255.255.0 -o eth0 -j MASQUERADE
+
+客户端安装配置
+	1)安装openvpn-install-2.3.7-I603-x86_64.exe
+		安装目录：D:\ProgramFiles\Openvpn\
+	2)拷贝秘钥及证书
+		cp /client/ca.crt D:\ProgramFiles\Openvpn\config\
+		cp /client/spirit.crt D:\ProgramFiles\Openvpn\config\
+		cp /client/spirit.key D:\ProgramFiles\Openvpn\config\
+		cd D:\ProgramFiles\Openvpn\config\
+		vim client.ovpn
+			client
+			proto udp
+			dev tun
+			remote 172.16.0.66 1194		#OpenVPN服务器的外网IP和端口
+			resolv-retry infinite
+			nobind
+			persist-key
+			persist-tun
+			ca   ca.crt
+			cert spirit.crt
+			key  spirit.key
+			comp-lzo
+			verb 3
+		:wq
+	3)打开OpenVPN GUI软件
+		openvpn-gui上右键Connect输入客户端密码连接
+
+
+
+
+
+
+
