@@ -7,6 +7,8 @@ JK	(apache整合tomcat工具)
 apr库
 	http://apr.apache.org/download.cgi
 zabbix
+	http://www.zabbix.com/download.php
+	http://sourceforge.net/projects/zabbix/files/ZABBIX%20Latest%20Stable/
 	http://jaist.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable
 zentao
 	www.zentao.net/download
@@ -16,3 +18,5 @@ ppp
 	http://sourceforge.net/projects/poptop/files/
 pptpd
 	http://sourceforge.net/projects/poptop/files/
+epel源
+http://download.ceph.com/rpm/el6/noarch/
