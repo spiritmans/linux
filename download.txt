@@ -12,3 +12,7 @@ zentao
 	www.zentao.net/download
 lzo
 	http://www.oberhumer.com/opensource/lzo/download/
+ppp
+	http://sourceforge.net/projects/poptop/files/
+pptpd
+	http://sourceforge.net/projects/poptop/files/

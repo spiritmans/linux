@@ -1,5 +1,5 @@
 安装依赖
-	yum install -y 
+	yum install -y pam pam-devel 
 安装lzo
 	tar fx lzo-2.02.tar.gz
 	cd lzo-2.02
@@ -58,32 +58,32 @@
 	2)初始化
 		./easyrsa init-pki
 	3)创建客户端key及生成证书
-		./easyrsa gen-req spirit
+		./easyrsa gen-req client1
 			>>Enter PEM pass phrase:            	#输入密码
 			>>Verifying - Enter PEM pass phrase:
-			>>Common Name [spirit]: spirit 			#输入Common Name
+			>>Common Name [client1]: client1 			#输入Common Name
 	4)导入生成的客户端spirit.req并签约证书
 		cd /usr/local/openvpn/easy-rsa/easyrsa3/
 		#导入spirit.req
-		./easyrsa import-req /client/easy-rsa/easyrsa3/pki/reqs/spirit.req spirit
+		./easyrsa import-req /client/easy-rsa/easyrsa3/pki/reqs/client1.req client1
 		#签约证书
-		./easyrsa sign client spirit
+		./easyrsa sign client client1
 			>>Confirm request details: yes      	#输入yes
 			>>Enter pass phrase for /root/openvpn-2.3.4/easy-rsa/easyrsa3/pki/private/ca.key:    #输入创建服务端根证书时的密码
-			>>Certificate created at: /usr/local/openvpn/easy-rsa/easyrsa3/pki/issued/spirit.crt  #签约成功
+			>>Certificate created at: /usr/local/openvpn/easy-rsa/easyrsa3/pki/issued/client1.crt  #签约成功
 服务端及客户端生成的文件
 	1)服务端
 		/usr/local/openvpn/easy-rsa/easyrsa3/pki/ca.crt
 		/usr/local/openvpn/easy-rsa/easyrsa3/pki/reqs/server.req
-		/usr/local/openvpn/easy-rsa/easyrsa3/pki/reqs/spirit.req
+		/usr/local/openvpn/easy-rsa/easyrsa3/pki/reqs/client1.req
 		/usr/local/openvpn/easy-rsa/easyrsa3/pki/private/ca.key
 		/usr/local/openvpn/easy-rsa/easyrsa3/pki/private/server.key
 		/usr/local/openvpn/easy-rsa/easyrsa3/pki/issued/server.crt
-		/usr/local/openvpn/easy-rsa/easyrsa3/pki/issued/spirit.crt
+		/usr/local/openvpn/easy-rsa/easyrsa3/pki/issued/client1.crt
 		/usr/local/openvpn/easy-rsa/easyrsa3/pki/dh.pem
 	2)客户端
-		/client/easy-rsa/easyrsa3/pki/private/spirit.key
-		/client/easy-rsa/easyrsa3/pki/reqs/spirit.req
+		/client/easy-rsa/easyrsa3/pki/private/client1.key
+		/client/easy-rsa/easyrsa3/pki/reqs/client1.req
 拷贝秘钥及证书文件
 	1)服务端
 		cd /usr/local/openvpn/easy-rsa/easyrsa3/pki/
@@ -94,8 +94,8 @@
 	2)客户端
 		cd /usr/local/openvpn/easy-rsa/easyrsa3/pki/
 		cp ca.crt /client/
-		cp issued/spirit.crt /client/
-		cp /client/easy-rsa/easyrsa3/pki/private/spirit.key /client/
+		cp issued/client1.crt /client/
+		cp /client/easy-rsa/easyrsa3/pki/private/client1.key /client/
 编辑服务端配置文件
 	cd /usr/local/openvpn/
 	cp /usr/local/src/openvpn-2.3.4/sample/sample-config-files/server.conf ./
