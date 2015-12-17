@@ -19,4 +19,10 @@ ppp
 pptpd
 	http://sourceforge.net/projects/poptop/files/
 epel源
-http://download.ceph.com/rpm/el6/noarch/
+	http://download.ceph.com/rpm/el6/noarch/
+redmine
+	http://www.redmine.org/projects/redmine/wiki/Download
+ruby
+	https://www.ruby-lang.org/en/downloads/
+ntop
+	http://sourceforge.net/projects/ntop/files/

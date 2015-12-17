@@ -1,0 +1,18 @@
+一、安装lamp/lnmp环境
+	lamp-install.sh/lnmp-install.sh
+二、下载bugfree安装包
+	bugfree_v3.0.4
+三、创建bugfree数据库
+	/etc/init.d/mysqld start
+	mysql -u root -p
+	>create database bugfree;
+	>grant all on bugfree.* to 'bugfree'@'127.0.0.1' identified by 'bugfree123';
+	>flush privileges;
+	>exit
+四、安装bugfree
+	cd /usr/local/src/
+	unzip bugfree_v3.0.4
+	mv bugfree_v3.0.4 /usr/local/apache2/htdocs/bugfree
+	chmod -R 666 /usr/local/apache2/htdocs/bugfree
+	/etc/init.d/httpd start && /etc/init.d/php-fpm start
+	http://127.0.0.1/bugfree/install
